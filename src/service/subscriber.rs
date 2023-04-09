@@ -13,7 +13,7 @@ use crate::repository::{
 #[automock]
 #[async_trait]
 pub trait SubscriberServiceTrait {
-    async fn list_sub_by_group(&self, group_name: String) -> ServiceResult<Vec<SubscriberEntity>>;
+    async fn list_subs_by_group(&self, group_name: String) -> ServiceResult<Vec<SubscriberEntity>>;
     async fn add_subscriber(&self, email: String, group_name: String) -> ServiceResult<()>;
     async fn remove_subscriber_from_group(
         &self,
@@ -43,13 +43,16 @@ impl SubscriberService {
 
 #[async_trait]
 impl SubscriberServiceTrait for SubscriberService {
-    async fn list_sub_by_group(&self, group_name: String) -> ServiceResult<Vec<SubscriberEntity>> {
+    async fn list_subs_by_group(&self, group_name: String) -> ServiceResult<Vec<SubscriberEntity>> {
         let existing_group = self.group_repository.get_group(&group_name).await?;
 
         match existing_group {
             Some(group) => {
                 info!("listing subscriber from group {:?}", &group_name);
-                let subscribers = self.subscriber_repository.list_sub_by_group(group).await?;
+                let subscribers = self
+                    .subscriber_repository
+                    .list_subs_by_group(&group)
+                    .await?;
 
                 info!("successfully obtained list of subscriber from group");
                 Ok(subscribers)
@@ -70,7 +73,7 @@ impl SubscriberServiceTrait for SubscriberService {
             Some(group) => {
                 info!("add subscriber into group {:?}", &group_name);
                 self.subscriber_repository
-                    .add_subscriber(&email, group)
+                    .add_subscriber(&email, &group)
                     .await?;
 
                 info!("successfully added subscriber into group");
@@ -96,7 +99,7 @@ impl SubscriberServiceTrait for SubscriberService {
             Some(group) => {
                 info!("removed subscriber from group {:?}", &group_name);
                 self.subscriber_repository
-                    .remove_subscriber_from_group(&email, group)
+                    .remove_subscriber_from_group(&email, &group)
                     .await?;
 
                 info!("successfully removed subscriber from group");

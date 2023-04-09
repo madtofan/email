@@ -56,7 +56,10 @@ impl Email for RequestHandler {
     ) -> Result<Response<EmailResponse>, Status> {
         let req = request.into_inner();
 
-        let subscribers = self.subscriber_service.list_sub_by_group(req.group).await?;
+        let subscribers = self
+            .subscriber_service
+            .list_subs_by_group(req.group)
+            .await?;
 
         let addresses = subscribers
             .into_iter()
@@ -136,7 +139,10 @@ impl Email for RequestHandler {
     ) -> Result<Response<SubscribersResponse>, Status> {
         let req = request.into_inner();
 
-        let subscriber_entity = self.subscriber_service.list_sub_by_group(req.group).await?;
+        let subscriber_entity = self
+            .subscriber_service
+            .list_subs_by_group(req.group)
+            .await?;
 
         let subscribers = subscriber_entity
             .into_iter()
@@ -152,7 +158,7 @@ impl Email for RequestHandler {
     ) -> Result<Response<GroupsResponse>, Status> {
         let req = request.into_inner();
 
-        let groups_entity = self.group_service.list_group_from_sub(req.email).await?;
+        let groups_entity = self.group_service.list_groups_by_sub(req.email).await?;
 
         let groups = groups_entity
             .into_iter()

@@ -30,7 +30,7 @@ impl GroupEntity {
 #[async_trait]
 pub trait GroupRepositoryTrait {
     async fn list_groups(&self) -> anyhow::Result<Vec<GroupEntity>>;
-    async fn list_groups_by_subcriber(&self, email: &str) -> anyhow::Result<Vec<GroupEntity>>;
+    async fn list_groups_by_sub(&self, email: &str) -> anyhow::Result<Vec<GroupEntity>>;
     async fn get_group(&self, name: &str) -> anyhow::Result<Option<GroupEntity>>;
     async fn add_group(&self, name: &str, description: &str) -> anyhow::Result<GroupEntity>;
     async fn remove_group(&self, name: &str) -> anyhow::Result<Option<GroupEntity>>;
@@ -69,7 +69,7 @@ impl GroupRepositoryTrait for GroupRepository {
         .context("an unexpected error occured while obtaining for group list")
     }
 
-    async fn list_groups_by_subcriber(&self, email: &str) -> anyhow::Result<Vec<GroupEntity>> {
+    async fn list_groups_by_sub(&self, email: &str) -> anyhow::Result<Vec<GroupEntity>> {
         query_as!(
             GroupEntity,
             r#"

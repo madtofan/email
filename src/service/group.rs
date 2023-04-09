@@ -11,8 +11,8 @@ use crate::repository::group::{DynGroupRepositoryTrait, GroupEntity};
 #[async_trait]
 pub trait GroupServiceTrait {
     async fn add_group(&self, name: String, description: String) -> ServiceResult<()>;
-    async fn remove_group(&self, group: String) -> ServiceResult<()>;
-    async fn list_group_from_sub(&self, email: String) -> ServiceResult<Vec<GroupEntity>>;
+    async fn remove_group(&self, group: String) -> ServiceResult<Option<GroupEntity>>;
+    async fn list_groups_by_sub(&self, email: String) -> ServiceResult<Vec<GroupEntity>>;
 }
 
 pub type DynGroupServiceTrait = Arc<dyn GroupServiceTrait + Sync + Send>;
@@ -47,7 +47,7 @@ impl GroupServiceTrait for GroupService {
         Ok(())
     }
 
-    async fn remove_group(&self, name: String) -> ServiceResult<()> {
+    async fn remove_group(&self, name: String) -> ServiceResult<Option<GroupEntity>> {
         let existing_group = self.repository.get_group(&name).await?;
 
         if existing_group.is_none() {
@@ -58,15 +58,15 @@ impl GroupServiceTrait for GroupService {
         }
 
         info!("deleting group {:?}", &name);
-        self.repository.remove_group(&name).await?;
+        let removed_group = self.repository.remove_group(&name).await?;
 
         info!("group successfully removed");
 
-        Ok(())
+        Ok(removed_group)
     }
 
-    async fn list_group_from_sub(&self, email: String) -> ServiceResult<Vec<GroupEntity>> {
-        let groups = self.repository.list_groups_by_subcriber(&email).await?;
+    async fn list_groups_by_sub(&self, email: String) -> ServiceResult<Vec<GroupEntity>> {
+        let groups = self.repository.list_groups_by_sub(&email).await?;
 
         Ok(groups)
     }
