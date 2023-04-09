@@ -49,6 +49,30 @@ impl EmailService {
 
         Self { mailer, from }
     }
+
+    #[cfg(not(test))]
+    fn send_message_email(&self, email: Message) -> ServiceResult<()> {
+        self.mailer
+            .send(&email)
+            .map_err(|err| ServiceError::InternalServerErrorWithContext(err.to_string()))?;
+
+        match self.mailer.send(&email) {
+            Ok(_) => Ok(()),
+            Err(_e) => Err(ServiceError::InternalServerErrorWithContext(
+                "Sending email failed".to_string(),
+            )),
+        }
+    }
+
+    #[cfg(test)]
+    fn send_message_email(&self, _email: Message) -> ServiceResult<()> {
+        self.mailer.test_connection().map_err(|_| {
+            ServiceError::InternalServerErrorWithContext(
+                "Can't communicate with SMTP server".to_string(),
+            )
+        })?;
+        Ok(())
+    }
 }
 
 #[async_trait]
@@ -66,22 +90,14 @@ impl EmailServiceTrait for EmailService {
             .body(body)
             .unwrap();
 
-        self.mailer
-            .send(&email)
-            .map_err(|err| ServiceError::InternalServerErrorWithContext(err.to_string()))?;
-
-        match self.mailer.send(&email) {
-            Ok(_) => println!("Email sent successfully!"),
-            Err(e) => panic!("Could not send email: {e:?}"),
-        }
-        todo!()
+        self.send_message_email(email)
     }
 
     async fn blast_email(
         &self,
-        addresses: Vec<String>,
-        title: String,
-        body: String,
+        _addresses: Vec<String>,
+        _title: String,
+        _body: String,
     ) -> ServiceResult<()> {
         todo!()
     }

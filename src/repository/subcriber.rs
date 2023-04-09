@@ -28,16 +28,19 @@ impl SubscriberEntity {
 #[automock]
 #[async_trait]
 pub trait SubscriberRepositoryTrait {
-    async fn list_sub_by_group(&self, group: GroupEntity) -> anyhow::Result<Vec<SubscriberEntity>>;
+    async fn list_subs_by_group(
+        &self,
+        group: &GroupEntity,
+    ) -> anyhow::Result<Vec<SubscriberEntity>>;
     async fn add_subscriber(
         &self,
         email: &str,
-        group: GroupEntity,
+        group: &GroupEntity,
     ) -> anyhow::Result<SubscriberEntity>;
     async fn remove_subscriber_from_group(
         &self,
         email: &str,
-        group: GroupEntity,
+        group: &GroupEntity,
     ) -> anyhow::Result<Option<SubscriberEntity>>;
 }
 
@@ -56,7 +59,10 @@ impl SubscriberRepository {
 
 #[async_trait]
 impl SubscriberRepositoryTrait for SubscriberRepository {
-    async fn list_sub_by_group(&self, group: GroupEntity) -> anyhow::Result<Vec<SubscriberEntity>> {
+    async fn list_subs_by_group(
+        &self,
+        group: &GroupEntity,
+    ) -> anyhow::Result<Vec<SubscriberEntity>> {
         query_as!(
             SubscriberEntity,
             r#"
@@ -79,7 +85,7 @@ impl SubscriberRepositoryTrait for SubscriberRepository {
     async fn add_subscriber(
         &self,
         email: &str,
-        group: GroupEntity,
+        group: &GroupEntity,
     ) -> anyhow::Result<SubscriberEntity> {
         query_as!(
             SubscriberEntity,
@@ -109,7 +115,7 @@ impl SubscriberRepositoryTrait for SubscriberRepository {
     async fn remove_subscriber_from_group(
         &self,
         email: &str,
-        group: GroupEntity,
+        group: &GroupEntity,
     ) -> anyhow::Result<Option<SubscriberEntity>> {
         query_as!(
             SubscriberEntity,

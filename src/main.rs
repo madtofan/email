@@ -1,5 +1,5 @@
 use crate::config::AppConfig;
-use crate::handler::RequestHandler;
+use crate::handler::email::RequestHandler;
 use crate::repository::group::{DynGroupRepositoryTrait, GroupRepository};
 use crate::repository::subcriber::{DynSubscriberRepositoryTrait, SubscriberRepository};
 use crate::service::email::{DynEmailServiceTrait, EmailService};
