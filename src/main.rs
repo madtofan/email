@@ -20,9 +20,6 @@ mod config;
 mod handler;
 mod repository;
 mod service;
-// pub mod email {
-//     tonic::include_proto!("email");
-// }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
