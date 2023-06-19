@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use common::errors::{ServiceError, ServiceResult};
+use madtofan_microservice_common::errors::{ServiceError, ServiceResult};
 use lettre::message::header::ContentType;
 use lettre::message::Mailbox;
 use lettre::transport::smtp::authentication::Credentials;

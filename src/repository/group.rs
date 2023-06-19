@@ -2,11 +2,11 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use async_trait::async_trait;
-use common::repository::connection_pool::ServiceConnectionPool;
+use madtofan_microservice_common::repository::connection_pool::ServiceConnectionPool;
 use mockall::automock;
 use sqlx::{query_as, types::time::OffsetDateTime, FromRow};
 
-use crate::email::groups_response::Group;
+use madtofan_microservice_common::email::groups_response::Group;
 
 #[derive(FromRow)]
 pub struct GroupEntity {
@@ -117,15 +117,11 @@ impl GroupRepositoryTrait for GroupRepository {
             r#"
                 insert into subscription_group (
                         name,
-                        description,
-                        created_at,
-                        updated_at
+                        description
                     )
                 values (
                         $1::varchar,
-                        $2::varchar,
-                        current_timestamp,
-                        current_timestamp
+                        $2::varchar
                     )
                 returning *
             "#,
