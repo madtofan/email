@@ -5,16 +5,16 @@ pub mod test {
     use std::sync::Arc;
 
     use clap::Parser;
+    use madtofan_microservice_common::email::{
+        email_server::Email, AddGroupRequest, AddSubscriberRequest, BlastEmailRequest,
+        GetSubscriberGroupsRequest, GetSubscribersRequest, RemoveGroupRequest,
+        RemoveSubscriberRequest, SendEmailRequest,
+    };
     use sqlx::PgPool;
     use tonic::Request;
 
     use crate::{
         config::AppConfig,
-        email::{
-            email_server::Email, AddGroupRequest, AddSubscriberRequest, BlastEmailRequest,
-            GetSubscriberGroupsRequest, GetSubscribersRequest, RemoveGroupRequest,
-            RemoveSubscriberRequest, SendEmailRequest,
-        },
         handler::email::RequestHandler,
         repository::{
             group::{DynGroupRepositoryTrait, GroupRepository},

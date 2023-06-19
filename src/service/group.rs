@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use common::errors::{ServiceError, ServiceResult};
+use madtofan_microservice_common::errors::{ServiceError, ServiceResult};
 use mockall::automock;
 use tracing::log::{error, info};
 

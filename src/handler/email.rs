@@ -1,16 +1,13 @@
+use crate::service::{
+    email::DynEmailServiceTrait, group::DynGroupServiceTrait, subscriber::DynSubscriberServiceTrait,
+};
 use tonic::{Request, Response, Status};
 
-use crate::{
-    email::{
-        email_server::Email, groups_response::Group, subscribers_response::Subscriber,
-        AddGroupRequest, AddSubscriberRequest, BlastEmailRequest, EmailResponse,
-        GetSubscriberGroupsRequest, GetSubscribersRequest, GroupsResponse, RemoveGroupRequest,
-        RemoveSubscriberRequest, SendEmailRequest, SubscribersResponse,
-    },
-    service::{
-        email::DynEmailServiceTrait, group::DynGroupServiceTrait,
-        subscriber::DynSubscriberServiceTrait,
-    },
+use madtofan_microservice_common::email::{
+    email_server::Email, groups_response::Group, subscribers_response::Subscriber, AddGroupRequest,
+    AddSubscriberRequest, BlastEmailRequest, EmailResponse, GetSubscriberGroupsRequest,
+    GetSubscribersRequest, GroupsResponse, RemoveGroupRequest, RemoveSubscriberRequest,
+    SendEmailRequest, SubscribersResponse,
 };
 
 pub struct RequestHandler {

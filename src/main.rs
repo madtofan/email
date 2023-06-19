@@ -6,9 +6,10 @@ use crate::service::email::{DynEmailServiceTrait, EmailService};
 use crate::service::group::{DynGroupServiceTrait, GroupService};
 use crate::service::subscriber::{DynSubscriberServiceTrait, SubscriberService};
 use clap::Parser;
-use common::repository::connection_pool::ServiceConnectionManager;
 use dotenv::dotenv;
-use email::email_server::EmailServer;
+use madtofan_microservice_common::{
+    email::email_server::EmailServer, repository::connection_pool::ServiceConnectionManager,
+};
 use std::sync::Arc;
 use tonic::transport::Server;
 use tracing::info;
@@ -19,9 +20,9 @@ mod config;
 mod handler;
 mod repository;
 mod service;
-pub mod email {
-    tonic::include_proto!("email");
-}
+// pub mod email {
+//     tonic::include_proto!("email");
+// }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -39,7 +40,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await
         .expect("could not initialize the database connection pool");
 
-    if *&config.seed {
+    if config.seed {
         todo!("Migrations is not done yet")
         // info!("migrations enabled, running...");
         // sqlx::migrate!()

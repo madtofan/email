@@ -2,11 +2,11 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use async_trait::async_trait;
-use common::repository::connection_pool::ServiceConnectionPool;
+use madtofan_microservice_common::{
+    email::subscribers_response::Subscriber, repository::connection_pool::ServiceConnectionPool,
+};
 use mockall::automock;
 use sqlx::{query_as, types::time::OffsetDateTime, FromRow};
-
-use crate::email::subscribers_response::Subscriber;
 
 use super::group::GroupEntity;
 
@@ -92,15 +92,11 @@ impl SubscriberRepositoryTrait for SubscriberRepository {
             r#"
                 insert into subscriber (
                         email,
-                        group_id,
-                        created_at,
-                        updated_at
+                        group_id
                     )
                 values (
                         $1::varchar,
-                        $2::bigint,
-                        current_timestamp,
-                        current_timestamp
+                        $2::bigint
                     )
                 returning *
             "#,
