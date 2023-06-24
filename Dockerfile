@@ -8,7 +8,7 @@ RUN apk update && \
     apk upgrade
 RUN apk add protoc protobuf-dev
 RUN apk add build-base
-# RUN apk add libressl-dev
+RUN apk add libressl-dev
 RUN apk add pkgconfig openssl openssl-dev musl-dev
 RUN rustup target add x86_64-unknown-linux-musl
 # RUN rustup target add aarch64-unknown-linux-musl
