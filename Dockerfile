@@ -8,15 +8,15 @@ RUN apk update && \
     apk upgrade
 RUN apk add protoc protobuf-dev
 RUN apk add build-base
-RUN apk add libressl-dev
-RUN apk add pkgconfig openssl openssl-dev musl-dev
+RUN apk add clang llvm
+RUN apk add openssl openssl-dev 
+RUN apk add pkgconfig
+RUN apk add --no-cache musl-dev
 RUN rustup target add x86_64-unknown-linux-musl
-# RUN rustup target add aarch64-unknown-linux-musl
-RUN rustup toolchain install stable-aarch64-unknown-linux-musl
 
 COPY . .
 
-RUN cargo build --release --target=x86_64-unknown-linux-musl
+RUN TARGET_CC=clang cargo build --release --target=x86_64-unknown-linux-musl
 RUN cargo install --path .
 
 # ------------------------------------------------------------------------------
