@@ -327,12 +327,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dotenv"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
-
-[[package]]
 name = "dotenvy"
 version = "0.15.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -360,7 +354,6 @@ dependencies = [
  "anyhow",
  "async-trait",
  "clap",
- "dotenv",
  "lettre",
  "madtofan-microservice-common",
  "mockall",
@@ -883,7 +876,7 @@ dependencies = [
 [[package]]
 name = "madtofan-microservice-common"
 version = "0.1.0"
-source = "git+https://github.com/madtofan/common?branch=bugfix/PR-3293#3d1f5147e3752a692e4b9cab737e94529fc41622"
+source = "git+https://github.com/madtofan/common?branch=master#b8caf61fe11878fc3281493072cbe6f6e5033f01"
 dependencies = [
  "anyhow",
  "axum",

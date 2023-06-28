@@ -1,14 +1,22 @@
 # ------------------------------------------------------------------------------
 # Cargo Build Stage
 # ------------------------------------------------------------------------------
-FROM rust:latest as cargo-build
+FROM rust:1.70-alpine as cargo-build
 
 WORKDIR /usr/src/email
+RUN apk update && \
+    apk upgrade
+RUN apk add protoc protobuf-dev
+RUN apk add build-base
+RUN apk add clang llvm
+RUN apk add openssl openssl-dev 
+RUN apk add pkgconfig
+RUN apk add --no-cache musl-dev
+RUN rustup target add x86_64-unknown-linux-musl
 
 COPY . .
 
-RUN cargo build --release
-
+RUN TARGET_CC=clang cargo build --release --target=x86_64-unknown-linux-musl
 RUN cargo install --path .
 
 # ------------------------------------------------------------------------------
