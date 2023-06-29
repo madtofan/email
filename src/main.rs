@@ -6,6 +6,7 @@ use crate::service::email::{DynEmailServiceTrait, EmailService};
 use crate::service::group::{DynGroupServiceTrait, GroupService};
 use crate::service::subscriber::{DynSubscriberServiceTrait, SubscriberService};
 use clap::Parser;
+use dotenv::dotenv;
 use madtofan_microservice_common::{
     email::email_server::EmailServer, repository::connection_pool::ServiceConnectionManager,
 };
@@ -22,6 +23,7 @@ mod service;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    dotenv().ok();
     let config = Arc::new(AppConfig::parse());
 
     tracing_subscriber::registry()

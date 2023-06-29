@@ -16,7 +16,7 @@ RUN rustup target add x86_64-unknown-linux-musl
 
 COPY . .
 
-RUN TARGET_CC=clang cargo build --release --target=x86_64-unknown-linux-musl
+RUN cargo build --release --target=x86_64-unknown-linux-musl
 RUN cargo install --path .
 
 # ------------------------------------------------------------------------------
