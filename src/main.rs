@@ -12,7 +12,7 @@ use madtofan_microservice_common::{
 };
 use std::sync::Arc;
 use tonic::transport::Server;
-use tracing::info;
+use tracing::{error, info};
 use tracing_subscriber::prelude::__tracing_subscriber_SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
@@ -31,19 +31,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    info!("Environment loaded and configuration parsed, initializing Postgres connection and running migrations...");
+    info!("Environment loaded and configuration parsed, initializing Postgres connection...");
     let pg_pool = ServiceConnectionManager::new_pool(&config.database_url)
         .await
         .expect("could not initialize the database connection pool");
 
-    if config.seed {
-        todo!("Migrations is not done yet")
-        // info!("migrations enabled, running...");
-        // sqlx::migrate!()
-        //     .run(&pool)
-        //     .await
-        //     .context("error while running database migrations")?;
+    if config.run_migrations {
+        info!("migrations enabled, running...");
+        sqlx::migrate!()
+            .run(&pg_pool)
+            .await
+            .unwrap_or_else(|err| error!("There was an error during migration: {:?}", err));
     }
+    info!("Migrations complete! initializing repositories...");
 
     let app_host = &config.service_url;
     let app_port = &config.service_port;
@@ -51,12 +51,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let subscriber_repository =
         Arc::new(SubscriberRepository::new(pg_pool.clone())) as DynSubscriberRepositoryTrait;
     let group_repository = Arc::new(GroupRepository::new(pg_pool)) as DynGroupRepositoryTrait;
-    let email_service = Arc::new(EmailService::new(&config)) as DynEmailServiceTrait;
+    info!("Repositories initialized, Initializing Services");
     let subscriber_service = Arc::new(SubscriberService::new(
         subscriber_repository,
         group_repository.clone(),
     )) as DynSubscriberServiceTrait;
     let group_service = Arc::new(GroupService::new(group_repository)) as DynGroupServiceTrait;
+    let email_service = Arc::new(EmailService::new(&config)) as DynEmailServiceTrait;
+    info!("Services initialized, Initializing Handler");
     let request_handler = RequestHandler::new(subscriber_service, group_service, email_service);
 
     info!("Service ready for request!");
