@@ -18,7 +18,8 @@ sqlx = { version = "0.6.2", features = [
   "time",
   "offline",
 ] }
-lettre = "0.10.3"
+lettre = { version = "0.10.4", features = ["tokio1", "tokio1-native-tls"] }
 tonic = "0.8.3"
 tokio = { version = "1.24.2", features = ["macros", "rt-multi-thread"] }
-madtofan-microservice-common = { git = "https://github.com/madtofan/common", branch = "master" }
+madtofan-microservice-common = { path="../common" }
+dotenv = "0.15.0"

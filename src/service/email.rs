@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use madtofan_microservice_common::errors::{ServiceError, ServiceResult};
-use lettre::message::header::ContentType;
 use lettre::message::Mailbox;
-use lettre::transport::smtp::authentication::Credentials;
-use lettre::{Message, SmtpTransport, Transport};
+use lettre::{
+    message::header::ContentType, transport::smtp::authentication::Credentials, AsyncSmtpTransport,
+    AsyncTransport, Message, Tokio1Executor,
+};
+use madtofan_microservice_common::errors::{ServiceError, ServiceResult};
 use mockall::automock;
 
 use crate::config::AppConfig;
@@ -25,7 +26,7 @@ pub trait EmailServiceTrait {
 pub type DynEmailServiceTrait = Arc<dyn EmailServiceTrait + Send + Sync>;
 
 pub struct EmailService {
-    mailer: SmtpTransport,
+    creds: Credentials,
     from: Mailbox,
 }
 
@@ -35,11 +36,6 @@ impl EmailService {
         let email_password = &config.service_email_password;
         let creds = Credentials::new(email_address.to_owned(), email_password.to_owned());
 
-        let mailer = SmtpTransport::relay("smtp.gmail.com")
-            .unwrap()
-            .credentials(creds)
-            .build();
-
         let from = format!(
             "{} <{}>",
             &config.service_email_name, &config.service_email_address
@@ -47,16 +43,18 @@ impl EmailService {
         .parse::<Mailbox>()
         .unwrap();
 
-        Self { mailer, from }
+        Self { creds, from }
     }
 
     #[cfg(not(test))]
-    fn send_message_email(&self, email: Message) -> ServiceResult<()> {
-        self.mailer
-            .send(&email)
-            .map_err(|err| ServiceError::InternalServerErrorWithContext(err.to_string()))?;
+    async fn send_message_email(&self, email: Message) -> ServiceResult<()> {
+        let mailer: AsyncSmtpTransport<Tokio1Executor> =
+            AsyncSmtpTransport::<Tokio1Executor>::starttls_relay("smtp.gmail.com")
+                .unwrap()
+                .credentials(self.creds.clone())
+                .build();
 
-        match self.mailer.send(&email) {
+        match mailer.send(email).await {
             Ok(_) => Ok(()),
             Err(_e) => Err(ServiceError::InternalServerErrorWithContext(
                 "Sending email failed".to_string(),
@@ -65,8 +63,14 @@ impl EmailService {
     }
 
     #[cfg(test)]
-    fn send_message_email(&self, _email: Message) -> ServiceResult<()> {
-        self.mailer.test_connection().map_err(|_| {
+    async fn send_message_email(&self, _email: Message) -> ServiceResult<()> {
+        let mailer: AsyncSmtpTransport<Tokio1Executor> =
+            AsyncSmtpTransport::<Tokio1Executor>::starttls_relay("smtp.gmail.com")
+                .unwrap()
+                .credentials(self.creds.clone())
+                .build();
+
+        mailer.test_connection().await.map_err(|_| {
             ServiceError::InternalServerErrorWithContext(
                 "Can't communicate with SMTP server".to_string(),
             )
@@ -90,7 +94,7 @@ impl EmailServiceTrait for EmailService {
             .body(body)
             .unwrap();
 
-        self.send_message_email(email)
+        self.send_message_email(email).await
     }
 
     async fn blast_email(

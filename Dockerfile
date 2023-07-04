@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------
 # Cargo Build Stage
 # ------------------------------------------------------------------------------
-FROM rust:1.70-alpine as cargo-build
+FROM rust:alpine as cargo-build
 
 WORKDIR /usr/src/email
 RUN apk update && \
@@ -14,9 +14,11 @@ RUN apk add pkgconfig
 RUN apk add --no-cache musl-dev
 RUN rustup target add x86_64-unknown-linux-musl
 
-COPY . .
+RUN mkdir -p /usr/src/common
+COPY ./common ../common
+COPY ./email .
 
-RUN TARGET_CC=clang cargo build --release --target=x86_64-unknown-linux-musl
+RUN cargo build --release --target=x86_64-unknown-linux-musl
 RUN cargo install --path .
 
 # ------------------------------------------------------------------------------
