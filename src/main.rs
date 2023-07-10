@@ -43,7 +43,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .await
             .unwrap_or_else(|err| error!("There was an error during migration: {:?}", err));
     }
-    info!("Migrations complete! initializing repositories...");
+    info!("Database configured! initializing repositories...");
 
     let app_host = &config.service_url;
     let app_port = &config.service_port;
@@ -61,7 +61,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Services initialized, Initializing Handler");
     let request_handler = RequestHandler::new(subscriber_service, group_service, email_service);
 
-    info!("Service ready for request!");
+    info!("Service ready for request at {:#?}!", app_url);
     Server::builder()
         .add_service(EmailServer::new(request_handler))
         .serve(app_url)
