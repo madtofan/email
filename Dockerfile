@@ -1,32 +1,31 @@
 # ------------------------------------------------------------------------------
 # Cargo Build Stage
 # ------------------------------------------------------------------------------
-FROM rust:alpine as cargo-build
+FROM rust:1.70.0 as builder
 
 WORKDIR /usr/src/email
-RUN apk update && \
-    apk upgrade
-RUN apk add protoc protobuf-dev
-RUN apk add build-base
-RUN apk add clang llvm
-RUN apk add openssl openssl-dev 
-RUN apk add pkgconfig
-RUN apk add --no-cache musl-dev
-RUN rustup target add x86_64-unknown-linux-musl
 
+# Installing dependencies
+RUN apt update && apt upgrade -y
+RUN apt install protobuf-compiler -y
+RUN apt-get install pkg-config libssl-dev -y
+
+# Copy in the rest of the sources
 RUN mkdir -p /usr/src/common
 COPY ./common ../common
-COPY ./email .
+COPY ./email/ .
 
-RUN RUSTFLAGS="-Ctarget-feature=-crt-static" cargo build --release --target=x86_64-unknown-linux-musl
-RUN RUSTFLAGS="-Ctarget-feature=-crt-static" cargo install --path .
+
+# This is the actual application build.
+RUN cargo build --release
 
 # ------------------------------------------------------------------------------
 # Final Stage
 # ------------------------------------------------------------------------------
+FROM debian:bullseye-slim AS runtime 
 
-FROM alpine:latest
+# Copy application binary from builder image
+COPY --from=builder /usr/src/email/target/release/email /usr/local/bin
 
-COPY --from=cargo-build /usr/local/cargo/bin/email /usr/local/bin/email
-
-CMD ["email"]
+# Run the application
+CMD ["/usr/local/bin/email"]
