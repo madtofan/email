@@ -1,31 +1,44 @@
 # ------------------------------------------------------------------------------
 # Cargo Build Stage
 # ------------------------------------------------------------------------------
-FROM rust:1.70.0 as builder
+ARG APP_NAME="email"
+FROM --platform=linux/amd64 rust:1.74.0-alpine as builder
 
-WORKDIR /usr/src/email
+ARG APP_NAME
+ARG TARGET="x86_64-unknown-linux-musl"
+ENV OPENSSL_NO_VENDOR=Y
+WORKDIR /usr/src/$APP_NAME
 
-# Installing dependencies
-RUN apt update && apt upgrade -y
-RUN apt install protobuf-compiler -y
-RUN apt-get install pkg-config libssl-dev -y
+# Create blank project
+RUN USER=root cargo new $APP_NAME
+RUN apk update && apk upgrade
+RUN apk add alpine-sdk
+RUN apk add --no-cache make protobuf-dev
+RUN apk add musl-dev pkgconfig openssl-dev
 
-# Copy in the rest of the sources
+## Install target platform (Cross-Compilation) --> Needed for Alpine
+RUN rustup target add $TARGET
+
+# Now copy in the rest of the sources
 RUN mkdir -p /usr/src/common
 COPY ./common ../common
-COPY ./email/ .
-
+COPY ./$APP_NAME/ .
 
 # This is the actual application build.
-RUN cargo build --release
+RUN RUSTFLAGS="-Ctarget-feature=-crt-static" cargo build --target x86_64-unknown-linux-musl --release
 
 # ------------------------------------------------------------------------------
 # Final Stage
 # ------------------------------------------------------------------------------
-FROM debian:bullseye-slim AS runtime 
+FROM alpine:3.18.0 AS runtime 
+ARG APP_NAME
+RUN apk update && apk upgrade
+RUN apk add alpine-sdk
+RUN apk add --no-cache make protobuf-dev
+RUN apk add musl-dev pkgconfig openssl-dev
 
 # Copy application binary from builder image
-COPY --from=builder /usr/src/email/target/release/email /usr/local/bin
+COPY --from=builder /usr/src/$APP_NAME/target/x86_64-unknown-linux-musl/release/$APP_NAME /usr/local/bin
 
 # Run the application
 CMD ["/usr/local/bin/email"]
