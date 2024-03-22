@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                select\n                    count(*)\n                from subscriber\n                where group_id = $1::bigint\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "c3a9d22d2c1cb4a8f81adcfbfba33e63f00f32f5dc0782ea2c96f2ce2cde75b3"
+}
