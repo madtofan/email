@@ -4,10 +4,9 @@ use crate::service::{
 use tonic::{Request, Response, Status};
 
 use madtofan_microservice_common::email::{
-    email_server::Email, groups_response::Group, subscribers_response::Subscriber, AddGroupRequest,
-    AddSubscriberRequest, BlastEmailRequest, EmailResponse, GetSubscriberGroupsRequest,
-    GetSubscribersRequest, GroupsResponse, RemoveGroupRequest, RemoveSubscriberRequest,
-    SendEmailRequest, SubscribersResponse,
+    email_server::Email, AddGroupRequest, AddSubscriberRequest, BlastEmailRequest, EmailResponse,
+    GetSubscriberGroupsRequest, GetSubscribersRequest, GroupsResponse, RemoveGroupRequest,
+    RemoveSubscriberRequest, SendEmailRequest, SubscribersResponse,
 };
 
 pub struct RequestHandler {
@@ -55,8 +54,9 @@ impl Email for RequestHandler {
 
         let subscribers = self
             .subscriber_service
-            .list_subs_by_group(req.group)
-            .await?;
+            .list_subs_by_group(req.group, None, None)
+            .await?
+            .subscribers;
 
         let addresses = subscribers
             .into_iter()
@@ -136,17 +136,12 @@ impl Email for RequestHandler {
     ) -> Result<Response<SubscribersResponse>, Status> {
         let req = request.into_inner();
 
-        let subscriber_entity = self
+        let subscribers_response = self
             .subscriber_service
-            .list_subs_by_group(req.group)
+            .list_subs_by_group(req.group, Some(req.offset), Some(req.limit))
             .await?;
 
-        let subscribers = subscriber_entity
-            .into_iter()
-            .map(|sub| sub.into_subscriber_response())
-            .collect::<Vec<Subscriber>>();
-
-        Ok(Response::new(SubscribersResponse { subscribers }))
+        Ok(Response::new(subscribers_response))
     }
 
     async fn get_subscriber_groups(
@@ -155,13 +150,11 @@ impl Email for RequestHandler {
     ) -> Result<Response<GroupsResponse>, Status> {
         let req = request.into_inner();
 
-        let groups_entity = self.group_service.list_groups_by_sub(req.email).await?;
+        let group_response = self
+            .group_service
+            .list_groups_by_sub(req.email, Some(req.offset), Some(req.limit))
+            .await?;
 
-        let groups = groups_entity
-            .into_iter()
-            .map(|group| group.into_group_response())
-            .collect::<Vec<Group>>();
-
-        Ok(Response::new(GroupsResponse { groups }))
+        Ok(Response::new(group_response))
     }
 }

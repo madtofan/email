@@ -1,19 +1,24 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use madtofan_microservice_common::errors::{ServiceError, ServiceResult};
+use madtofan_microservice_common::{
+    email::{subscribers_response::Subscriber, SubscribersResponse},
+    errors::{ServiceError, ServiceResult},
+};
 use mockall::automock;
 use tracing::log::{error, info};
 
-use crate::repository::{
-    group::DynGroupRepositoryTrait,
-    subcriber::{DynSubscriberRepositoryTrait, SubscriberEntity},
-};
+use crate::repository::{group::DynGroupRepositoryTrait, subcriber::DynSubscriberRepositoryTrait};
 
 #[automock]
 #[async_trait]
 pub trait SubscriberServiceTrait {
-    async fn list_subs_by_group(&self, group_name: String) -> ServiceResult<Vec<SubscriberEntity>>;
+    async fn list_subs_by_group(
+        &self,
+        group_name: String,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> ServiceResult<SubscribersResponse>;
     async fn add_subscriber(&self, email: String, group_name: String) -> ServiceResult<()>;
     async fn remove_subscriber_from_group(
         &self,
@@ -43,19 +48,34 @@ impl SubscriberService {
 
 #[async_trait]
 impl SubscriberServiceTrait for SubscriberService {
-    async fn list_subs_by_group(&self, group_name: String) -> ServiceResult<Vec<SubscriberEntity>> {
+    async fn list_subs_by_group(
+        &self,
+        group_name: String,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> ServiceResult<SubscribersResponse> {
         let existing_group = self.group_repository.get_group(&group_name).await?;
 
         match existing_group {
             Some(group) => {
                 info!("listing subscriber from group {:?}", &group_name);
-                let subscribers = self
+                let subscriber_entity = self
                     .subscriber_repository
-                    .list_subs_by_group(&group)
+                    .list_subs_by_group(&group, offset, limit)
+                    .await?;
+                let count = self
+                    .subscriber_repository
+                    .get_subs_by_group_count(&group)
                     .await?;
 
                 info!("successfully obtained list of subscriber from group");
-                Ok(subscribers)
+                Ok(SubscribersResponse {
+                    count,
+                    subscribers: subscriber_entity
+                        .into_iter()
+                        .map(|sub| sub.into_subscriber_response())
+                        .collect::<Vec<Subscriber>>(),
+                })
             }
             None => {
                 error!("group {:?} does not exists", &group_name);

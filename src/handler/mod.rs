@@ -126,7 +126,7 @@ pub mod test {
         all_traits.handler.add_subscriber(request).await?;
         let added_sub = all_traits
             .group_repository
-            .list_groups_by_sub(sub_email)
+            .list_groups_by_sub(sub_email, None, None)
             .await?;
         assert_eq!(added_sub.first().unwrap().description, group_description);
 
@@ -162,7 +162,7 @@ pub mod test {
         all_traits.handler.remove_subscriber(request).await?;
         let subs_list = all_traits
             .subscriber_repository
-            .list_subs_by_group(&group)
+            .list_subs_by_group(&group, Some(0), None)
             .await?;
 
         assert_eq!(subs_list.len(), 1);
@@ -251,6 +251,8 @@ pub mod test {
 
         let request = Request::new(GetSubscribersRequest {
             group: group1_name.to_string(),
+            offset: 0,
+            limit: 10,
         });
 
         let subs_list = all_traits
@@ -291,6 +293,8 @@ pub mod test {
 
         let request = Request::new(GetSubscriberGroupsRequest {
             email: subscriber_email.to_string(),
+            offset: 0,
+            limit: 10,
         });
 
         let groups_list = all_traits

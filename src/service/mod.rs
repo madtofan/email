@@ -129,8 +129,9 @@ pub mod test {
 
         let groups_list = traits
             .group_service
-            .list_groups_by_sub(subscriber_email.to_string())
-            .await?;
+            .list_groups_by_sub(subscriber_email.to_string(), None, None)
+            .await?
+            .groups;
 
         assert_eq!(groups_list.len(), 1);
         assert_eq!(groups_list.first().unwrap().description, group1_description);
@@ -165,8 +166,9 @@ pub mod test {
 
         let subs_list = traits
             .subscriber_service
-            .list_subs_by_group(group1_name.to_string())
-            .await?;
+            .list_subs_by_group(group1_name.to_string(), None, None)
+            .await?
+            .subscribers;
 
         assert_eq!(subs_list.len(), 1);
         assert_eq!(subs_list.first().unwrap().email, sub1_email);
@@ -193,7 +195,7 @@ pub mod test {
 
         let added_sub = traits
             .group_repository
-            .list_groups_by_sub(sub_email)
+            .list_groups_by_sub(sub_email, Some(0), Some(10))
             .await?;
         assert_eq!(added_sub.first().unwrap().description, group_description);
 
@@ -227,7 +229,7 @@ pub mod test {
             .await?;
         let subs_list = traits
             .subscriber_repository
-            .list_subs_by_group(&group)
+            .list_subs_by_group(&group, Some(0), Some(100))
             .await?;
 
         assert_eq!(subs_list.len(), 1);
@@ -276,7 +278,7 @@ pub mod test {
 
         let subs_list = traits
             .subscriber_repository
-            .list_subs_by_group(&group)
+            .list_subs_by_group(&group, None, None)
             .await?;
         let email_list = subs_list
             .iter()

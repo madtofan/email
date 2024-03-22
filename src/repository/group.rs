@@ -4,7 +4,7 @@ use anyhow::Context;
 use async_trait::async_trait;
 use madtofan_microservice_common::repository::connection_pool::ServiceConnectionPool;
 use mockall::automock;
-use sqlx::{query_as, types::time::OffsetDateTime, FromRow};
+use sqlx::{query, query_as, types::time::OffsetDateTime, FromRow};
 
 use madtofan_microservice_common::email::groups_response::Group;
 
@@ -30,7 +30,13 @@ impl GroupEntity {
 #[async_trait]
 pub trait GroupRepositoryTrait {
     async fn list_groups(&self) -> anyhow::Result<Vec<GroupEntity>>;
-    async fn list_groups_by_sub(&self, email: &str) -> anyhow::Result<Vec<GroupEntity>>;
+    async fn list_groups_by_sub(
+        &self,
+        email: &str,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> anyhow::Result<Vec<GroupEntity>>;
+    async fn get_groups_by_sub_count(&self, email: &str) -> anyhow::Result<i64>;
     async fn get_group(&self, name: &str) -> anyhow::Result<Option<GroupEntity>>;
     async fn add_group(&self, name: &str, description: &str) -> anyhow::Result<GroupEntity>;
     async fn remove_group(&self, name: &str) -> anyhow::Result<Option<GroupEntity>>;
@@ -69,9 +75,15 @@ impl GroupRepositoryTrait for GroupRepository {
         .context("an unexpected error occured while obtaining for group list")
     }
 
-    async fn list_groups_by_sub(&self, email: &str) -> anyhow::Result<Vec<GroupEntity>> {
-        query_as!(
-            GroupEntity,
+    async fn list_groups_by_sub(
+        &self,
+        email: &str,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> anyhow::Result<Vec<GroupEntity>> {
+        let limit_string = format!(" limit {}", limit.unwrap_or_default());
+        let offset_string = format!(" offset {}", offset.unwrap_or_default());
+        let query_string = format!(
             r#"
                 select
                     sg.id as id,
@@ -82,13 +94,41 @@ impl GroupRepositoryTrait for GroupRepository {
                 from subscription_group as sg
                 join subscriber as s
                 on sg.id = s.group_id
-                where s.email = $1::varchar
+                where s.email = '{}'
+                {}
+                {}
+            "#,
+            email,
+            match limit {
+                Some(_) => &limit_string,
+                None => "",
+            },
+            match offset {
+                Some(_) => &offset_string,
+                None => "",
+            }
+        );
+
+        sqlx::query_as::<_, GroupEntity>(&query_string)
+            .fetch_all(&self.pool)
+            .await
+            .context("an unexpected error occured while obtaining for group list")
+    }
+
+    async fn get_groups_by_sub_count(&self, email: &str) -> anyhow::Result<i64> {
+        let count_result = query!(
+            r#"
+                select
+                    count(*)
+                from subscriber
+                where email = $1::varchar
             "#,
             email
         )
-        .fetch_all(&self.pool)
-        .await
-        .context("an unexpected error occured while obtaining for group list")
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(count_result.count.unwrap())
     }
 
     async fn get_group(&self, name: &str) -> anyhow::Result<Option<GroupEntity>> {

@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use madtofan_microservice_common::errors::{ServiceError, ServiceResult};
+use madtofan_microservice_common::{
+    email::{groups_response::Group, GroupsResponse},
+    errors::{ServiceError, ServiceResult},
+};
 use mockall::automock;
 use tracing::log::{error, info};
 
@@ -12,7 +15,12 @@ use crate::repository::group::{DynGroupRepositoryTrait, GroupEntity};
 pub trait GroupServiceTrait {
     async fn add_group(&self, name: String, description: String) -> ServiceResult<()>;
     async fn remove_group(&self, group: String) -> ServiceResult<Option<GroupEntity>>;
-    async fn list_groups_by_sub(&self, email: String) -> ServiceResult<Vec<GroupEntity>>;
+    async fn list_groups_by_sub(
+        &self,
+        email: String,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> ServiceResult<GroupsResponse>;
 }
 
 pub type DynGroupServiceTrait = Arc<dyn GroupServiceTrait + Sync + Send>;
@@ -65,9 +73,24 @@ impl GroupServiceTrait for GroupService {
         Ok(removed_group)
     }
 
-    async fn list_groups_by_sub(&self, email: String) -> ServiceResult<Vec<GroupEntity>> {
-        let groups = self.repository.list_groups_by_sub(&email).await?;
+    async fn list_groups_by_sub(
+        &self,
+        email: String,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> ServiceResult<GroupsResponse> {
+        let group_entities = self
+            .repository
+            .list_groups_by_sub(&email, offset, limit)
+            .await?;
+        let count = self.repository.get_groups_by_sub_count(&email).await?;
 
-        Ok(groups)
+        Ok(GroupsResponse {
+            groups: group_entities
+                .into_iter()
+                .map(|group| group.into_group_response())
+                .collect::<Vec<Group>>(),
+            count,
+        })
     }
 }

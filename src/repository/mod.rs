@@ -104,7 +104,7 @@ pub mod test {
 
         let listed_group = traits
             .group_repository
-            .list_groups_by_sub(subscriber_email)
+            .list_groups_by_sub(subscriber_email, Some(0), Some(10))
             .await?;
 
         assert_eq!(listed_group.len(), 1);
@@ -148,7 +148,7 @@ pub mod test {
 
         let subscribers_list = traits
             .subscriber_repository
-            .list_subs_by_group(&group1)
+            .list_subs_by_group(&group1, None, None)
             .await?;
 
         assert_eq!(subscribers_list.len(), 1);
@@ -187,7 +187,7 @@ pub mod test {
 
         let subscribers_list = traits
             .subscriber_repository
-            .list_subs_by_group(&group)
+            .list_subs_by_group(&group, None, None)
             .await?;
 
         assert_eq!(subscribers_list.len(), 1);
